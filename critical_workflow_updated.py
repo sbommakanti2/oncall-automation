@@ -188,10 +188,11 @@ if __name__ == '__main__':
     #     exit(1)
     print("stdout " + stdout)
     output = stdout.splitlines()
-    if len(output):
+    if len(output) > 4:
         output = int(output[-3].strip().split('|')[0].strip())
         print('filtered istatus', output)
         if output != 1 and output != 5:
+            print('Issue with '+workflow_name+' attempting to restart')
             data = """var a = ["""+workflow_name+""""]
             a.forEach(function(entry) {
                 countWkf=sqlGetInt("Select count(*) from xtkworkflow where """ + query_param + """='" + entry + "' and ifailed=1")
@@ -223,10 +224,11 @@ if __name__ == '__main__':
             #     exit(1)
             print("stdout " + stdout)
             output = stdout.splitlines()
-            if len(output):
+            if len(output) > 4:
                 output = int(output[-3].strip().split('|')[0].strip())
                 print('filtered istatus', output)
                 if output != 1 and output != 5:
+                    print('Restarting '+workflow_name+' failed. Proceeding with unconditional stop')
                     unconditional_data = """var a = ["""+workflow_name+"""]
                                     a.forEach(function(entry) {
                                         countWkf=sqlGetInt("Select count(*) from xtkworkflow where """ + query_param + """='" + entry + "' and ifailed=1")
@@ -248,5 +250,11 @@ if __name__ == '__main__':
                     # if stderr:
                     #     print(stderr)
                     #     exit(1)
+                else:
+                    print("No issue with " + workflow_name)
+            else:
+                print("No issue with " + workflow_name)
         else:
-            print("Status 1")
+            print("No issue with "+workflow_name)
+    else:
+        print("No issue with " + workflow_name)
