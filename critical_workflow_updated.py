@@ -190,7 +190,8 @@ if __name__ == '__main__':
     output = stdout.splitlines()
     if len(output) > 4:
         output = int(output[-3].strip().split('|')[0].strip())
-        print('filtered istatus', output)
+        output_list = ['Not Started', 'In Progress', '', 'Suspended', 'Stopping', 'Finished']
+        print('Status of workflow -> {} is {}({}'.format(workflow_name, output_list[output], output))
         if output != 1 and output != 5:
             print('Issue with '+workflow_name+' attempting to restart')
             data = """var a = ["""+workflow_name+""""]
@@ -218,7 +219,6 @@ if __name__ == '__main__':
             print(stdout)
 
             stdout, stderr = check_for_failed_workflows(query_param, workflow_name)
-            print(stdout)
             # if stderr:
             #     print(stderr)
             #     exit(1)
@@ -226,7 +226,7 @@ if __name__ == '__main__':
             output = stdout.splitlines()
             if len(output) > 4:
                 output = int(output[-3].strip().split('|')[0].strip())
-                print('filtered istatus', output)
+                print('Again Status of workflow -> {} is {}({}'.format(workflow_name, output_list[output], output))
                 if output != 1 and output != 5:
                     print('Restarting '+workflow_name+' failed. Proceeding with unconditional stop')
                     unconditional_data = """var a = ["""+workflow_name+"""]
@@ -245,16 +245,26 @@ if __name__ == '__main__':
                     #     print(stderr)
                     #     exit(1)
 
+                    print('After unconditional stop, now starting workflow')
+                    stdout, stderr = run_workflow(instance_name)
+                    # if stderr:
+                    #     print(stderr)
+                    #     exit(1)
+                    print(stdout)
+                    print('Waiting for 30 seconds to recheck status')
                     stdout, stderr = check_for_failed_workflows(query_param, workflow_name)
                     print(stdout)
                     # if stderr:
                     #     print(stderr)
                     #     exit(1)
-                else:
-                    print("No issue with " + workflow_name)
-            else:
-                print("No issue with " + workflow_name)
-        else:
-            print("No issue with "+workflow_name)
-    else:
-        print("No issue with " + workflow_name)
+                    output = stdout.splitlines()
+                    if len(output) > 4:
+                        output = int(output[-3].strip().split('|')[0].strip())
+                        print('At last Status of workflow -> {} is {}({}'.format(workflow_name, output_list[output],
+                                                                               output))
+    #         else:
+    #             print("No issue with " + workflow_name)
+    #     else:
+    #         print("No issue with "+workflow_name)
+    # else:
+    #     print("No issue with " + workflow_name)
