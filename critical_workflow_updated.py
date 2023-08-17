@@ -11,6 +11,7 @@ from pwd import getpwnam
 import argparse
 from argparse import RawTextHelpFormatter
 import fileinput
+import time
 
 neolane_uid = getpwnam('neolane').pw_uid
 neolane_gid = getpwnam('neolane').pw_gid
@@ -252,6 +253,8 @@ if __name__ == '__main__':
                     #     exit(1)
                     print(stdout)
                     print('Waiting for 30 seconds to recheck status')
+                    time.sleep(30)
+                    print('After waiting')
                     stdout, stderr = check_for_failed_workflows(query_param, workflow_name)
                     print(stdout)
                     # if stderr:
