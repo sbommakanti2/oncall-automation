@@ -215,7 +215,7 @@ def update_dashboard(args):
         print("customer name or tenant id is missing")
         exit(1)
 
-    if not dashboard_name:
+    if dashboard_name:
         req_guid = get_req_dashboard_guid(dashboard_name)
         dashboard_json = get_dashboard(req_guid)
     else:
