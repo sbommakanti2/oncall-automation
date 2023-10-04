@@ -1,7 +1,7 @@
 # /usr/bin/python3
 """
 Author:         Shivakumar Bommakanti
-Date:           10-March-2023
+Date:           104-October-2023
 Description:    This script is helpful for creating new dashboards and/or
                 updating existing dashboards by taking user input data
 
@@ -34,6 +34,10 @@ Input:          There are few inputs a user has to pass below
                 4D. Please enter desired widget name (eg: Siriusxm Radio Inc. - Memory):
 
 Output:         Creating/updating dashboard data
+
+Versions:
+10-March-2023 -> Script initial creation
+04-Oct-2023 -> Update script to perform action referring its own template
 """
 # -*- coding: future_fstrings -*-
 import requests
@@ -205,14 +209,19 @@ def update_dashboard(args):
     print("update dashboard called")
     customer_name = args.get("customer_name", "")
     tenant_id = args.get("tenant_id", "")
+    dashboard_name = args.get("dashboard_name","")
 
     if not customer_name and not tenant_id:
         print("customer name or tenant id is missing")
         exit(1)
 
-    brp_dashboard_json = get_brp_dashboard()
+    if not dashboard_name:
+        req_guid = get_req_dashboard_guid(dashboard_name)
+        dashboard_json = get_dashboard(req_guid)
+    else:
+        dashboard_json = get_brp_dashboard()
     updated_dashboard_json = update_brp_with_provided_details(
-        json.dumps(brp_dashboard_json), customer_name, tenant_id)
+        json.dumps(dashboard_json), customer_name, tenant_id)
     jsonvariables = json.loads(updated_dashboard_json)['data']['actor']
     entity = jsonvariables.pop('entity')
     jsonvariables['dashboard'] = entity
