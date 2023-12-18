@@ -1,10 +1,11 @@
 #!/usr/bin/python3
 """
 Python3 script for Start, stop, restart process that are missing
-Requirements: subprocess, in_place, time, sys
+Requirements: subprocess, time, sys, argparse
 Input: None
 Author: Shivakumar Bommakanti
-Date: 04-04-2023
+ver 1 : Created - 04-04-2023
+ver 2 : Added possible values to Process argument - 18-12-2023
 """
 import subprocess
 import sys
@@ -136,15 +137,16 @@ if __name__ == '__main__':
 
     exe_process = """ 
                         Required Arguments for each step:
-                        Action, Process_name
-                        
+                        Action, 
+                        Process_name from [inmail, mta, pipelined, syslogd, trackinglogd, web, wfserver]
                         Choose Action from [start, stop, restart]
                   """
     parser = argparse.ArgumentParser(
         epilog=exe_process, formatter_class=RawTextHelpFormatter)
     required_parser = parser.add_argument_group('required arguments')
     required_parser.add_argument("-a", "--action", help="Action")
-    required_parser.add_argument("-p", "--process_name", help="Process Name")
+    required_parser.add_argument("-p", "--process_name", help="Process Name",
+                                 choice = ["inmail", "mta", "pipelined", "syslogd", "trackinglogd", "web", "wfserver"])
 
     args_namespace = parser.parse_args()
     args = vars(args_namespace)

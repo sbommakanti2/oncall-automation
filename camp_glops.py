@@ -1,17 +1,22 @@
 #!/usr/bin/python3
 """
 Python3 script for eliminating inmail issues
-Requirements: subprocess, in_place, time, sys
+Requirements: subprocess, fileinput, time, sys, os, logging, pwd
 Input: None
 Author: Shivakumar Bommakanti
-Date: 04-26-2023
+ver 1 : Created - 04-26-2023
+ver 2 : Added timeout of 90 secs and camp globs status check, restart - 18-12-2023
 """
+import os
 import subprocess
 import sys
 import time
 import logging
 import fileinput
+from pwd import getpwnam
 
+neolane_uid = getpwnam('neolane').pw_uid
+neolane_gid = getpwnam('neolane').pw_gid
 
 def run_commands(commands):
     """Runs unix commands using subprocess module
@@ -192,7 +197,19 @@ def check_for_installation():
         time.sleep(5)
 
     if "/usr/bin/camp-glops" in stdout:
-        logger.info("camp_glops already installed.. exiting")
+        commands = [
+            "/etc/init.d/camp-glops status"
+        ]
+        stdout, stderr = run_commands(commands)
+        if "running" not in stdout:
+            commands = [
+                "/etc/init.d/camp-glops stop && /etc/init.d/camp-glops start && /etc/init.d/camp-glops status"
+            ]
+            stdout, stderr = run_commands(commands)
+            if "running" not in stdout:
+                print('Camp-glops are not in running state and failed to restart')
+                sys.exit(0)
+        logger.info("camp_glops already installed")
         return
     else:
         install_camp_glops()
@@ -300,9 +317,15 @@ if __name__ == '__main__':
     change_content_in_files(
         '/etc/glops/glops.ini', 'Listen = "[::1]:110,127.0.0.1:110"', 'Listen = "127.0.0.1:110"')
 
+    print('Modifying permissions to neolane')
+    os.chown('/etc/default/camp-glops', neolane_uid, neolane_gid)
+    print('Modified permissions')
+
     not_healthy = check_mailbox_status()
     if not_healthy:
-        time.sleep(15)
+        command = ["/etc/init.d/camp-glops restart"]
+        stdout, stderr = run_commands(command)
+        print('stdout', stdout, 'error', stderr)
         restart_inMail()
 
     hostname = get_hostname_new()
@@ -332,22 +355,29 @@ if __name__ == '__main__':
         #time.sleep(15)
         #restart_inMail()
 
-    # Now we check the throughput periodically until 10 mins.
-    #throughput = check_throughput()
+    print('Restarting campglobs and inmail')
+    command = ["/etc/init.d/camp-glops restart"]
+    stdout,stderr = run_commands(command)
+    print('stdout', stdout, 'error', stderr)
+    restart_inMail()
+    # Now we check the throughput periodically until 1.5 mins.
+    throughput = check_throughput()
     command = ["camp-glops -check -check-details"]
     stdout, stderr = run_commands(command)
     print(stdout)
-    time.sleep(60)
-    elapsed_time = 60
-    while elapsed_time < 600:
+    time.sleep(15)
+    elapsed_time = 15
+    while elapsed_time < 90:
         if "Mailbox(es) are ok" in stdout:
             logger.info("Mailboxes are healthy")
             print("Mailboxes are healthy, exiting")
+            sys.exit(0)
         else:
             stdout, stderr = run_commands(command)
             print(stdout)
-            time.sleep(60)
-            elapsed_time += 60
+            time.sleep(15)
+            elapsed_time += 15
     else:
-        logger.exception("timeout waiting for throughput to down to 500")
-        print("Mail size is too big, mails are processing, Exiting script")
+        throughput = check_throughput()
+        logger.exception("timeout for waiting")
+        print("Mail size is too big, mails are processing, Current Throughput is",throughput,".Exiting script")
