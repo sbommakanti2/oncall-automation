@@ -326,7 +326,7 @@ if __name__ == '__main__':
     if not_healthy:
         command = ["/etc/init.d/camp-glops restart"]
         stdout, stderr = run_commands(command)
-        print('stdout', stdout, 'error', stderr)
+        #print('stdout', stdout, 'error', stderr)
         restart_inMail()
 
     hostname = get_hostname_new()
@@ -359,7 +359,6 @@ if __name__ == '__main__':
     print('Restarting campglobs and inmail')
     command = ["/etc/init.d/camp-glops restart"]
     stdout,stderr = run_commands(command)
-    print('stdout', stdout, 'error', stderr)
     restart_inMail()
     # Now we check the throughput periodically until 1.5 mins.
     throughput = check_throughput()
