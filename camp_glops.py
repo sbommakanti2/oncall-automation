@@ -294,7 +294,8 @@ def check_throughput():
             '\t', '').replace(' ', '')
 
     try:
-        throughput = int(throughput)
+        if throughput:
+            throughput = int(throughput)
     except Exception:
         logger.exception("error in converting throughput into integer")
 
