@@ -146,7 +146,7 @@ if __name__ == '__main__':
     required_parser = parser.add_argument_group('required arguments')
     required_parser.add_argument("-a", "--action", help="Action")
     required_parser.add_argument("-p", "--process_name", help="Process Name",
-                                 choice = ["inmail", "mta", "pipelined", "syslogd", "trackinglogd", "web", "wfserver"])
+                                 choices = ["inmail", "mta", "pipelined", "syslogd", "trackinglogd", "web", "wfserver"])
 
     args_namespace = parser.parse_args()
     args = vars(args_namespace)
