@@ -381,4 +381,4 @@ if __name__ == '__main__':
     else:
         throughput = check_throughput()
         logger.exception("timeout for waiting")
-        print("Mail size is too big, mails are processing, Current Throughput is",throughput,".Exiting script")
+        print("Mail size is too big, mails are processing, Current Throughput is {}.Exiting script".format(throughput))
