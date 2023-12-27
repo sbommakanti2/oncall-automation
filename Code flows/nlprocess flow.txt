@@ -1,0 +1,31 @@
+nlprocess missing/stop/start/restart
+
+Suppose we got an alert for a process missing inmail
+
+First Scenario:
+nlserver monitor -missing (If the process is positive, means missing then we will do the restart)
+  This above case is not applicable to web because for web we need to follow other approach (apache restart and web restart)
+    Web: If web is present on the monitor -missing command, Then we don't need to take core (gcore command is not needed)
+
+Second Scenario:
+We got an alert for a process missing but we don't find that in "nlserver monitor -missing" Then,
+  We need to check if that has been restarted by watchdog to check if a process is restarted recently: "nlserver pdump -full <processname@instance_name>"
+  By running above command we will know the time that it got an automatic restart. (If this Scenario is true then print a statement as " The watchdog restarted the process")
+
+Third Scenario:
+If above two Scenarios are not true that means it has been in a stuck state, That means we need to generate a gcore, We need to run command of (gcore <pid>) The pid for the gcore
+can be obtained using nlserver pdump command
+  Ex: neolane@clarins-rt-prod3-1:~$ nlserver pdump
+      17:30:51 >   Application server for Adobe Campaign Classic (7.3.2 build 9356@0347232 of 11/10/2022)
+      syslogd@default (841313) - 26.7 MB
+      trackinglogd@default (845537) - 29.4 MB
+      mta@clarins_rt_prod3 (845538) - 271.2 MB
+      pipelined@clarins_rt_prod3 (845539) - 43.4 MB
+      wfserver@clarins_rt_prod3 (845540) - 41.3 MB
+      mtachild@clarins_rt_prod3 (1203234) - 62.6 MB
+      web@default (845943) - 801.3 MB
+      inMail@clarins_rt_prod3 (875773) - 45.1 MB
+      watchdog (2833137) - 7.8 MB
+
+And, then we will do the restart process, Once the restart has been completed we just need to make sure it is running. To do that "nlserver pdump -full <processname@instance_name>"
+Print statement to be added as successfull restart for the process is done.
