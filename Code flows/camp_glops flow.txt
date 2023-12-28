@@ -41,14 +41,15 @@ Flow for Camp globs technical
 		a. if OsType is 0 Then //Debian
 			1. apt-get update -y,
 			   apt-get install camp-glops -y,
-               /etc/init.d/camp-glops start,
-               update-rc.d camp-glops enable,
-               camp-glops -check -check-details
+               		   /etc/init.d/camp-glops start,
+               		   update-rc.d camp-glops enable,
+                           camp-glops -check -check-details
 		b. else  //CentOS
 			1. yum update -y,
 			   yum install camp-glops -y,
-			   systemctl start camp-globs.services,
-			   camp-glops -check -check-details
+			   systemctl start camp-globs.service,
+			   camp-glops -check -check-details,
+			   systemctl stop dovecot.service
 		c. run commands
 4. Sleep for 10 seconds
 5. change in content for file /etc/hosts and /etc/glops/glops.ini
@@ -57,7 +58,7 @@ Flow for Camp globs technical
 	i. if OsType is 0 Then //Debian
 		a. camp globs restart using /etc/init.d/camp-glops restart
 	ii. else //CentOS
-	    a. camp globs restart using 'systemctl restart camp-globs.services'
+	    a. camp globs restart using 'systemctl restart camp-globs.service'
 	iii. restart in mail using below steps
 		  a. retrieve new hostname ls /usr/local/neolane/nl*/conf/config*xml | grep -v default | cut -d. -f1 | cut -d'-' -f2
 		  b. restart mail server nohup /usr/bin/sudo -u neolane bash -c '. /usr/local/neolane/nl*/env.sh ; nlserver restart inMail@" +
@@ -69,7 +70,7 @@ Flow for Camp globs technical
 	i. if OsType is 0 Then //Debian
 		a. /etc/init.d/camp-glops restart
 	ii. else //CentOS
-		a. systemctl restart camp-globs.services
+		a. systemctl restart camp-globs.service
 11. Restart in mail using below steps
 		a. retrieve new hostname ls /usr/local/neolane/nl*/conf/config*xml | grep -v default | cut -d. -f1 | cut -d'-' -f2
 		b. restart mail server nohup /usr/bin/sudo -u neolane bash -c '. /usr/local/neolane/nl*/env.sh ; nlserver restart inMail@" +
