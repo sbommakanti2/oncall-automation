@@ -150,14 +150,15 @@ def install_camp_glops(osType):
             "apt-get install camp-glops -y",
             "/etc/init.d/camp-glops start",
             "update-rc.d camp-glops enable",
-            "camp-glops -check -check-details",
+            "camp-glops -check -check-details"
         ]
     else:
         commands = [
             "yum update -y",
             "yum install camp-glops -y",
-            "systemctl start camp-globs.services",
+            "systemctl start camp-globs.service",
             "camp-glops -check -check-details",
+            "systemctl stop dovecot.service"
         ]
     stdout, stderr = run_commands(commands)
     logger.info(stdout)
@@ -378,7 +379,7 @@ if __name__ == '__main__':
         if osType == 0:
             command = ["/etc/init.d/camp-glops restart"]
         else:
-            command = ["systemctl restart camp-globs.services"]
+            command = ["systemctl restart camp-globs.service"]
         stdout, stderr = run_commands(command)
         #print('stdout', stdout, 'error', stderr)
         restart_inMail()
@@ -414,7 +415,7 @@ if __name__ == '__main__':
     if osType == 0:
         command = ["/etc/init.d/camp-glops restart"]
     else:
-        command = ["systemctl restart camp-globs.services"]
+        command = ["systemctl restart camp-globs.service"]
 
     stdout,stderr = run_commands(command)
     restart_inMail()
