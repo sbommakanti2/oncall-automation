@@ -53,7 +53,7 @@ Flow for Camp globs technical
 		c. run commands
 4. Sleep for 10 seconds
 5. change in content for file /etc/hosts and /etc/glops/glops.ini
-6. Modifying permission for this file with neolane user for /etc/default/camp-glops
+6. Modifying permission if OsType if 0 i.e Debian for this file with neolane user for /etc/default/camp-glops
 7. check mail status using camp-glops -check -v. If Not healthy
 	i. if OsType is 0 Then //Debian
 		a. camp globs restart using /etc/init.d/camp-glops restart
