@@ -6,6 +6,7 @@ Input: None
 Author: Shivakumar Bommakanti
 ver 1 : Created - 04-26-2023
 ver 2 : Added timeout of 90 secs and camp globs status check, restart - 18-12-2023
+ver 3 : Added code to check hostnamectl and commands to install camp globs accordingly - 25-12-2023
 """
 import os
 import subprocess
@@ -140,32 +141,46 @@ def restart_inMail():
     return
 
 
-def install_camp_glops():
+def install_camp_glops(osType):
     """Install the camp glops if not installed
     """
-    commands = [
-        "apt-get update -y",
-        "apt-get install camp-glops -y",
-        "/etc/init.d/camp-glops start",
-        "update-rc.d camp-glops enable",
-        "camp-glops -check -check-details",
-    ]
+    if osType == 0:
+        commands = [
+            "apt-get update -y",
+            "apt-get install camp-glops -y",
+            "/etc/init.d/camp-glops start",
+            "update-rc.d camp-glops enable",
+            "camp-glops -check -check-details",
+        ]
+    else:
+        commands = [
+            "yum update -y",
+            "yum install camp-glops -y",
+            "systemctl start camp-globs.services",
+            "camp-glops -check -check-details",
+        ]
     stdout, stderr = run_commands(commands)
     logger.info(stdout)
     logger.exception(stderr)
 
 
-def disable_dovecot():
-    commands = [
-        "/etc/init.d/dovecot stop",
-        "update-rc.d dovecot disable"
-    ]
+def disable_dovecot(osType):
+
+    if osType == 0:
+        commands = [
+            "/etc/init.d/dovecot stop",
+            "update-rc.d dovecot disable"
+        ]
+    else:
+        commands = [
+            "systemctl stop dovecot.service"
+        ]
     stdout, stderr = run_commands(commands)
     logger.info(stdout)
     logger.exception(stderr)
 
 
-def kill_process_dovecot():
+def kill_process_dovecot(commandPart):
     command = [
         "ps -eo pid,command | egrep '/usr/sbin/dovecot' | grep -v grep | awk '{print $1}'"]
     stdout, stderr = run_commands(command)
@@ -182,7 +197,7 @@ def kill_process_dovecot():
         return
 
 
-def check_for_installation():
+def check_for_installation(osType):
     commands = [
         "ps -ef | egrep 'dovecot|glops'"
     ]
@@ -192,27 +207,40 @@ def check_for_installation():
         return
 
     if "/usr/sbin/dovecot" in stdout:
-        kill_process_dovecot()
-        disable_dovecot()
+        kill_process_dovecot("/usr/sbin/dovecot")
+        disable_dovecot(osType)
+        time.sleep(5)
+    elif "/usr/bin/dovecot" in stdout:
+        kill_process_dovecot("/usr/bin/dovecot")
+        disable_dovecot(osType)
         time.sleep(5)
 
-    if "/usr/bin/camp-glops" in stdout:
-        commands = [
-            "/etc/init.d/camp-glops status"
-        ]
-        stdout, stderr = run_commands(commands)
-        if "running" not in stdout:
-            commands = [
+    if "/usr/bin/camp-glops" in stdout or "/usr/sbin/camp-glops" in stdout:
+        if osType == 0:
+            commands_status = [
+                "/etc/init.d/camp-glops status"
+            ]
+            commands_running = [
                 "/etc/init.d/camp-glops stop && /etc/init.d/camp-glops start && /etc/init.d/camp-glops status"
             ]
-            stdout, stderr = run_commands(commands)
+        else:
+            commands_status = [
+                "systemctl status camp-glops.service"
+            ]
+            commands_running = [
+                "systemctl stop camp-glops.service && systemctl start camp-glops.service && systemctl status camp-glops.service"
+            ]
+
+        stdout, stderr = run_commands(commands_status)
+        if "running" not in stdout:
+            stdout, stderr = run_commands(commands_running)
             if "running" not in stdout:
                 print('Camp-glops are not in running state and failed to restart')
                 sys.exit(0)
         logger.info("camp_glops already installed")
         return
     else:
-        install_camp_glops()
+        install_camp_glops(osType)
 
 
 def change_content_in_files(filename, find_text, replace_text, flag=0):
@@ -241,7 +269,7 @@ def fix_inmail_extaccounts():
     stdout, stderr = run_commands([sql_retrieve_command])
     print(stderr)
     if 'PGSQL.5432" failed: No such file or directory' in stderr:
-        stdout1,stderr1 = run_commands((['eval $(camp-db-params -e)']))
+        stdout1,stderr1 = run_commands((['eval $(camp-db-params-e)']))
         print('DB Error loop After running fix Out- ',stdout1,' Error - ',stderr1)
     iextaccountid = stdout.strip("\t").strip("\n").strip(" ")
     logger.info(iextaccountid)
@@ -301,6 +329,27 @@ def check_throughput():
 
     return throughput
 
+def getOSType():
+    """Runs hostnamectl command and returns
+    1 - if OS is CentOS
+    0 - if OS is Debian"""
+
+    command = "hostnamectl"
+    stdout, stderr = run_commands([command])
+
+    if stderr:
+        print("error in getting Operating System")
+        logger.exception("error in getting Operating System")
+        sys.exit(0)
+
+    if 'Debian' in stdout:
+        return 0
+    elif 'CentOS' in stdout:
+        return 1
+    else:
+        print('OS is not CentOS or Debian. Exiting')
+        sys.exit(0)
+
 
 if __name__ == '__main__':
     try:
@@ -310,7 +359,9 @@ if __name__ == '__main__':
     except Exception as e:
         raise e
 
-    check_for_installation()
+    osType = getOSType()
+
+    check_for_installation(osType)
     time.sleep(10)
 
     change_content_in_files('/etc/hosts', '::1	        localhost ip6-localhost ip6-loopback',
@@ -324,7 +375,10 @@ if __name__ == '__main__':
 
     not_healthy = check_mailbox_status()
     if not_healthy:
-        command = ["/etc/init.d/camp-glops restart"]
+        if osType == 0:
+            command = ["/etc/init.d/camp-glops restart"]
+        else:
+            command = ["systemctl restart camp-globs.services"]
         stdout, stderr = run_commands(command)
         #print('stdout', stdout, 'error', stderr)
         restart_inMail()
@@ -357,7 +411,11 @@ if __name__ == '__main__':
         #restart_inMail()
 
     print('Restarting campglobs and inmail')
-    command = ["/etc/init.d/camp-glops restart"]
+    if osType == 0:
+        command = ["/etc/init.d/camp-glops restart"]
+    else:
+        command = ["systemctl restart camp-globs.services"]
+
     stdout,stderr = run_commands(command)
     restart_inMail()
     # Now we check the throughput periodically until 1.5 mins.
