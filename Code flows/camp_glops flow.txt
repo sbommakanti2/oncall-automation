@@ -1,47 +1,63 @@
 Flow for Camp globs technical
 
 1. Sets logger for inmail
-2. Get Operating system using hostnamectl
+2. Get Operating system using hostnamectl as OsType
+	i. If OS is 'Debian' return 0
+	ii. Else if OS is 'CentOS' return 1
+	iii. Else print error and Exit. 
 3. check installation
 	i. ps -ef | egrep 'dovecot|glops' run this command
-	ii. Check if /usr/sbin/dovecot or or /usr/bin/dovecot is there in above output. If Yes,
-		a. kill process dovecot
+	ii. Check if /usr/sbin/dovecot is there in above output. If Yes,
+		a. kill process dovecot using ps -eo pid,command | egrep '/usr/sbin/dovecot' | grep -v grep | awk '{print $1}'
 		b. Disable dovecot with below commands
-			1. if OS is CentOS Then
-				i. systemctl stop dovecot.service
-			2. else //Debian
+			1. if OsType is 0 Then //Debian
 				i. /etc/init.d/dovecot stop
 				ii. update-rc.d dovecot disable
+			2. else //CentOS
+				i. systemctl stop dovecot.service
 		c. sleep for 5 seconds
-	iii. Check if /usr/sbin/camp-glops or or /usr/bin/camp-glops is there in above output. If Yes, //This means camp globs already exist
-		a. if OS is CentOS Then
-			1. systemctl status camp-glops.service
-		b. else 
-			1. Run /etc/init.d/camp-glops status
-		c. If 'running' not in above output then stop, start and check status again
-		d. If again 'running' not in above output then print 
-			1. Camp-glops are not in running state and failed to restart.
-			2. exit from execution
-	iv. If no, install camp globs running below commands
-		a. if OS is CentOS Then
-			1. yum update -y,
-			   yum install camp-glops -y,
-			   systemctl start camp-globs.services,
-			   camp-glops -check -check-details
-		b. else
+	iii. Else if Check /usr/bin/dovecot is there in above output. If Yes,
+		a. kill process dovecot using ps -eo pid,command | egrep '/usr/bin/dovecot' | grep -v grep | awk '{print $1}'
+		b. Disable dovecot with below commands
+			1. if OsType is 0 Then //Debian
+				i. /etc/init.d/dovecot stop
+				ii. update-rc.d dovecot disable
+			2. else //CentOS
+				i. systemctl stop dovecot.service
+		c. sleep for 5 seconds
+	iv. Check if /usr/bin/camp-glops or /usr/sbin/camp-glops is there in above output. If Yes, //This means camp globs already exist
+		a. if OsType is 0 Then //Debian
+			1. Set command as '/etc/init.d/camp-glops status'
+			2. Set command to stop, start and status as '/etc/init.d/camp-glops stop && /etc/init.d/camp-glops start && /etc/init.d/camp-glops status'
+		b. else //CentOS
+			1. Set command as 'systemctl status camp-glops.service'
+			2. Set command to stop, start and status as 'systemctl stop camp-glops.service && systemctl start camp-glops.service && systemctl status camp-glops.service'
+		c. Run status command set in 3.iv.a.1 or 3.iv.b.1
+		d. If 'running' not in above output then stop, start and check status again using 3.iv.a.2 or 3.iv.b.2
+			1. If again 'running' not in above output then print 
+				i. Camp-glops are not in running state and failed to restart.
+				ii. exit from execution
+	v. If no, install camp globs running below commands
+		a. if OsType is 0 Then //Debian
 			1. apt-get update -y,
 			   apt-get install camp-glops -y,
                /etc/init.d/camp-glops start,
                update-rc.d camp-glops enable,
                camp-glops -check -check-details
+		b. else  //CentOS
+			1. yum update -y,
+			   yum install camp-glops -y,
+			   systemctl start camp-globs.services,
+			   camp-glops -check -check-details
+		c. run commands
 4. Sleep for 10 seconds
 5. change in content for file /etc/hosts and /etc/glops/glops.ini
 6. Modifying permission for this file with neolane user for /etc/default/camp-glops
 7. check mail status using camp-glops -check -v. If Not healthy
-	i. if OS is CentOS Then
-	    a. camp globs restart using systemctl restart camp-globs.services
-	ii. else
+	i. if OsType is 0 Then //Debian
 		a. camp globs restart using /etc/init.d/camp-glops restart
+	ii. else //CentOS
+	    a. camp globs restart using 'systemctl restart camp-globs.services'
 	iii. restart in mail using below steps
 		  a. retrieve new hostname ls /usr/local/neolane/nl*/conf/config*xml | grep -v default | cut -d. -f1 | cut -d'-' -f2
 		  b. restart mail server nohup /usr/bin/sudo -u neolane bash -c '. /usr/local/neolane/nl*/env.sh ; nlserver restart inMail@" +
@@ -50,10 +66,10 @@ Flow for Camp globs technical
 8. retrieve new hostname and run ls /usr/local/neolane/nl*/conf/config-'+hostname+'.xml'
 9. replace this content in file <inMail autoStart="true" with <inMail autoStart="true" maxMsgPerSession="3000" popMailPeriodSec="5" popQueueSize="200" user="neolane"
 10. Restart camp globs
-	i. if OS is CentOS Then
-		a. systemctl restart camp-globs.services
-	ii. else
+	i. if OsType is 0 Then //Debian
 		a. /etc/init.d/camp-glops restart
+	ii. else //CentOS
+		a. systemctl restart camp-globs.services
 11. Restart in mail using below steps
 		a. retrieve new hostname ls /usr/local/neolane/nl*/conf/config*xml | grep -v default | cut -d. -f1 | cut -d'-' -f2
 		b. restart mail server nohup /usr/bin/sudo -u neolane bash -c '. /usr/local/neolane/nl*/env.sh ; nlserver restart inMail@" +
