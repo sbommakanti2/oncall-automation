@@ -1,40 +1,60 @@
 Flow for Camp globs technical
 
 1. Sets logger for inmail
-2. check installation
+2. Get Operating system using hostnamectl
+3. check installation
 	i. ps -ef | egrep 'dovecot|glops' run this command
-	ii. Check if /usr/sbin/dovecot is there in above output. If Yes,
+	ii. Check if /usr/sbin/dovecot or or /usr/bin/dovecot is there in above output. If Yes,
 		a. kill process dovecot
 		b. Disable dovecot with below commands
-			1. /etc/init.d/dovecot stop
-			2. update-rc.d dovecot disable
+			1. if OS is CentOS Then
+				i. systemctl stop dovecot.service
+			2. else //Debian
+				i. /etc/init.d/dovecot stop
+				ii. update-rc.d dovecot disable
 		c. sleep for 5 seconds
-	iii. Check if /usr/bin/camp-glops is there in above output. If Yes, //This means camp globs already exist
-		a. Run /etc/init.d/camp-glops status
-		b. If 'running' not in above output then stop, start and check status again
-		c. If again 'running' not in above output then print 
+	iii. Check if /usr/sbin/camp-glops or or /usr/bin/camp-glops is there in above output. If Yes, //This means camp globs already exist
+		a. if OS is CentOS Then
+			1. systemctl status camp-glops.service
+		b. else 
+			1. Run /etc/init.d/camp-glops status
+		c. If 'running' not in above output then stop, start and check status again
+		d. If again 'running' not in above output then print 
 			1. Camp-glops are not in running state and failed to restart.
 			2. exit from execution
 	iv. If no, install camp globs running below commands
-		a. apt-get update -y,
-		   apt-get install camp-glops -y,
-           /etc/init.d/camp-glops start,
-           update-rc.d camp-glops enable,
-           camp-glops -check -check-details
-3. Sleep for 10 seconds
-4. change in content for file /etc/hosts and /etc/glops/glops.ini
-5. Modifying permission for this file with neolane user for /etc/default/camp-glops
-6. check mail status using camp-glops -check -v. If Not healthy
-	i. camp globs restart using /etc/init.d/camp-glops restart
-	ii. restart in mail using below steps
-		a. retrieve new hostname ls /usr/local/neolane/nl*/conf/config*xml | grep -v default | cut -d. -f1 | cut -d'-' -f2
-		b. restart mail server nohup /usr/bin/sudo -u neolane bash -c '. /usr/local/neolane/nl*/env.sh ; nlserver restart inMail@" +
-        hostname -noconsole' > /dev/null &
-		c. sleep for 40 seconds
-7. retrieve new hostname and run ls /usr/local/neolane/nl*/conf/config-'+hostname+'.xml'
-8. replace this content in file <inMail autoStart="true" with <inMail autoStart="true" maxMsgPerSession="3000" popMailPeriodSec="5" popQueueSize="200" user="neolane"
-9. Restart camp globs /etc/init.d/camp-glops restart
-10. Restart in mail using below steps
+		a. if OS is CentOS Then
+			1. yum update -y,
+			   yum install camp-glops -y,
+			   systemctl start camp-globs.services,
+			   camp-glops -check -check-details
+		b. else
+			1. apt-get update -y,
+			   apt-get install camp-glops -y,
+               /etc/init.d/camp-glops start,
+               update-rc.d camp-glops enable,
+               camp-glops -check -check-details
+4. Sleep for 10 seconds
+5. change in content for file /etc/hosts and /etc/glops/glops.ini
+6. Modifying permission for this file with neolane user for /etc/default/camp-glops
+7. check mail status using camp-glops -check -v. If Not healthy
+	i. if OS is CentOS Then
+	    a. camp globs restart using systemctl restart camp-globs.services
+	ii. else
+		a. camp globs restart using /etc/init.d/camp-glops restart
+	iii. restart in mail using below steps
+		  a. retrieve new hostname ls /usr/local/neolane/nl*/conf/config*xml | grep -v default | cut -d. -f1 | cut -d'-' -f2
+		  b. restart mail server nohup /usr/bin/sudo -u neolane bash -c '. /usr/local/neolane/nl*/env.sh ; nlserver restart inMail@" +
+             hostname -noconsole' > /dev/null &
+		  c. sleep for 40 seconds
+8. retrieve new hostname and run ls /usr/local/neolane/nl*/conf/config-'+hostname+'.xml'
+9. replace this content in file <inMail autoStart="true" with <inMail autoStart="true" maxMsgPerSession="3000" popMailPeriodSec="5" popQueueSize="200" user="neolane"
+10. Restart camp globs
+	i. if OS is CentOS Then
+		a. systemctl restart camp-globs.services
+	ii. else
+		a. /etc/init.d/camp-glops restart
+11. Restart in mail using below steps
 		a. retrieve new hostname ls /usr/local/neolane/nl*/conf/config*xml | grep -v default | cut -d. -f1 | cut -d'-' -f2
 		b. restart mail server nohup /usr/bin/sudo -u neolane bash -c '. /usr/local/neolane/nl*/env.sh ; nlserver restart inMail@" +
         hostname -noconsole' > /dev/null &
@@ -45,4 +65,3 @@ Flow for Camp globs technical
 14. Loop for 90 seconds and check if mail boxes are healthy
 15. If after 90 seconds still not healthy Print Mail size is too big, mails are processing, Current Throughput is [].Exiting script
 		
-	
