@@ -6,7 +6,7 @@ Input: None
 Author: Shivakumar Bommakanti
 ver 1 : Created - 04-26-2023
 ver 2 : Added timeout of 90 secs and camp globs status check, restart - 18-12-2023
-ver 3 : Added code to check hostnamectl and commands to install camp globs accordingly - 25-12-2023
+ver 3 : Added code to check hostnamectl and commands to install camp glops accordingly - 25-12-2023
 """
 import os
 import subprocess
@@ -310,15 +310,15 @@ def check_throughput():
     throughput = ""
     #stdout, stderr = run_commands(
     command = ["camp-glops -check -check-details | grep neolane | awk -F\| '{print $5}' | awk '{$1=$1;print}' | awk -F" " '{print $1}'"]
-    #stdout = subprocess.check_output(
-        #command[0], shell=True, universal_newlines=True, timeout=15)
-    process = subprocess.Popen(command, shell=True, universal_newlines=True,
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = process.communicate()
+    #stdout = subprocess.check_output(command[0], shell=True, universal_newlines=True, timeout=15)
+    # process = subprocess.Popen(command, shell=True, universal_newlines=True,
+    #                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    # stdout, stderr = process.communicate()
+    stdout, stderr = run_commands(command)
     if stderr:
         logger.exception("error in fetching throughput")
     #else:
-    print('throughput ', stdout)
+    print('throughput', stdout)
     throughput = stdout.replace('\n', '').replace(
             '\t', '').replace(' ', '')
 
@@ -412,7 +412,7 @@ if __name__ == '__main__':
         #time.sleep(15)
         #restart_inMail()
 
-    print('Restarting campglobs and inmail')
+    print('Restarting campglops and inmail')
     if osType == 0:
         command = ["/etc/init.d/camp-glops restart"]
     else:
@@ -434,7 +434,7 @@ if __name__ == '__main__':
             sys.exit(0)
         else:
             stdout, stderr = run_commands(command)
-            print(stdout)
+            #print(stdout)
             time.sleep(15)
             elapsed_time += 15
     else:
