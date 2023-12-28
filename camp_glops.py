@@ -128,7 +128,7 @@ def restart_inMail():
         "nohup /usr/bin/sudo -u neolane bash -c '. /usr/local/neolane/nl*/env.sh ; nlserver restart inMail@" +
         hostname+" -noconsole' > /dev/null &"
     ]
-    print(commands)
+    #print(commands)
     try:
         result = subprocess.check_output(
             commands[0], shell=True, universal_newlines=True, timeout=15)
@@ -156,7 +156,7 @@ def install_camp_glops(osType):
         commands = [
             "yum update -y",
             "yum install camp-glops -y",
-            "systemctl start camp-globs.service",
+            "systemctl start camp-glops.service",
             "camp-glops -check -check-details",
             "systemctl stop dovecot.service"
         ]
@@ -268,7 +268,7 @@ def fix_inmail_extaccounts():
         " -c \"SELECT iextaccountid,saccount,sname,sserver,sport,spassword FROM nmsextaccount WHERE itype = 0 and iactive = 1;\" | awk -F\"|\" 'NR==3 {if($6==\" \") print $1}'"
     logger.info(sql_retrieve_command)
     stdout, stderr = run_commands([sql_retrieve_command])
-    print(stderr)
+    #print(stderr)
     if 'PGSQL.5432" failed: No such file or directory' in stderr:
         stdout1,stderr1 = run_commands((['eval $(camp-db-params-e)']))
         print('DB Error loop After running fix Out- ',stdout1,' Error - ',stderr1)
@@ -277,7 +277,7 @@ def fix_inmail_extaccounts():
     if iextaccountid != "":
         delete_command = "psql -d "+dbname + \
             " -c \"DELETE FROM nmsextaccount WHERE iextaccountid = "+iextaccountid+";\""
-        print(delete_command)
+        #print(delete_command)
         stdout, stderr = run_commands([delete_command])
         logger.exception(stderr)
 
@@ -370,16 +370,17 @@ if __name__ == '__main__':
     change_content_in_files(
         '/etc/glops/glops.ini', 'Listen = "[::1]:110,127.0.0.1:110"', 'Listen = "127.0.0.1:110"')
 
-    print('Modifying permissions to neolane')
-    os.chown('/etc/default/camp-glops', neolane_uid, neolane_gid)
-    print('Modified permissions')
+    if osType == 0: #Debian
+        print('Modifying permissions to neolane')
+        os.chown('/etc/default/camp-glops', neolane_uid, neolane_gid)
+        print('Modified permissions')
 
     not_healthy = check_mailbox_status()
     if not_healthy:
         if osType == 0:
             command = ["/etc/init.d/camp-glops restart"]
         else:
-            command = ["systemctl restart camp-globs.service"]
+            command = ["systemctl restart camp-glops.service"]
         stdout, stderr = run_commands(command)
         #print('stdout', stdout, 'error', stderr)
         restart_inMail()
@@ -387,12 +388,12 @@ if __name__ == '__main__':
     hostname = get_hostname_new()
     command = ['ls /usr/local/neolane/nl*/conf/config-'+hostname+'.xml']
     stdout, stderr = run_commands(command)
-    print(stdout)
-    print(stderr)
+   # print(stdout)
+    #print(stderr)
     print('Before updating inmail config file')
 
     for file in stdout.split("\n"):
-        print(file)
+        #print(file)
         if hostname in file:
             change_content_in_files(file,
                             '<inMail autoStart="true"',
@@ -415,7 +416,7 @@ if __name__ == '__main__':
     if osType == 0:
         command = ["/etc/init.d/camp-glops restart"]
     else:
-        command = ["systemctl restart camp-globs.service"]
+        command = ["systemctl restart camp-glops.service"]
 
     stdout,stderr = run_commands(command)
     restart_inMail()
@@ -423,7 +424,7 @@ if __name__ == '__main__':
     throughput = check_throughput()
     command = ["camp-glops -check -check-details"]
     stdout, stderr = run_commands(command)
-    print(stdout)
+    #print(stdout)
     time.sleep(15)
     elapsed_time = 15
     while elapsed_time < 90:
